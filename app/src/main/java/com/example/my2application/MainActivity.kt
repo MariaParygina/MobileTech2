@@ -16,13 +16,15 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.foundation.clickable
-import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavType
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import androidx.compose.ui.unit.sp
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -58,13 +60,24 @@ data class RecipeDetails(
     val description: String,
 )
 
+enum class RecipeFilter {
+    ALL, WANT_TO_COOK, COOKING, COOKED
+}
+
+enum class RecipeStage {
+    NONE, WANT_TO_COOK, COOKING, COOKED,
+}
+
+data class RecipeStatus(
+    val stage: RecipeStage = RecipeStage.NONE,
+)
+
 val sampleRecipeList = listOf(
     Recipe(1, "Грибной крем-суп", "Новичок", 6, 26),
     Recipe(2, "Суп куриный с чечевицей", "Новичок", 7, 35),
     Recipe(3, "Курица в сливочном соусе на сковороде", "Новичок", 3, 158),
     Recipe(4, "Плов узбекский из говядины в казане", "Новичок", 8, 194),
     Recipe(5, "Лазанья с фаршем в духовке в соусе Бешамель", "Новичок", 6, 237),
-//    Recipe(6, "", "Новичок", 7, 35),
 )
 
 val sampleRecipeDetailsList = listOf(
@@ -77,12 +90,12 @@ val sampleRecipeDetailsList = listOf(
         portions = 6,
         calories = 26,
         ingredients = "Шампиньоны – 400 г\n" +
-                        "Лук репчатый – 1 шт.\n" +
-                        "Сливки – 150 мл 10%\n" +
-                        "Картофель – 4 шт.\n" +
-                        "Масло растительное – 2 ст.л.\n" +
-                        "Вода – 2 л\n" +
-                        "Соль – ч.л. по вкусу",
+                "Лук репчатый – 1 шт.\n" +
+                "Сливки – 150 мл 10%\n" +
+                "Картофель – 4 шт.\n" +
+                "Масло растительное – 2 ст.л.\n" +
+                "Вода – 2 л\n" +
+                "Соль – ч.л. по вкусу",
         description = "1. Обжарка: Репчатый лук нарезать кубиками, шампиньоны (или любые другие грибы) — пластинками. Обжарить их на сливочном масле до золотистого цвета и выпаривания жидкости (около 7–10 минут).\n" +
                 "\n" +
                 "2. Варка: В кастрюле вскипятить воду или бульон (куриный/овощной). Добавить обжаренные грибы с луком, нарезанный кубиками картофель. Варить 15–20 минут до мягкости картофеля.\n" +
@@ -101,13 +114,14 @@ val sampleRecipeDetailsList = listOf(
         time = "40 мин",
         portions = 7,
         calories = 35,
-        ingredients = "Шампиньоны – 400 г\n" +
+        ingredients = "Куриное филе – 500 г\n" +
+                "Чечевица – 200 г\n" +
+                "Картофель – 3 шт.\n" +
+                "Морковь – 1 шт.\n" +
                 "Лук репчатый – 1 шт.\n" +
-                "Сливки – 150 мл 10%\n" +
-                "Картофель – 4 шт.\n" +
+                "Чеснок – 2 зубчика\n" +
                 "Масло растительное – 2 ст.л.\n" +
-                "Вода – 2 л\n" +
-                "Соль – ч.л. по вкусу",
+                "Соль, перец, лавровый лист – по вкусу",
         description = "1. Подготовка: Куриные части (голень, бедро или филе) залить холодной водой, довести до кипения. Снять пену, убавить огонь и варить бульон 20–30 минут.\n" +
                 "\n" +
                 "2. Закладка овощей: Морковь натереть на крупной терке, лук мелко нарезать. Обжарить их на сковороде с маслом до мягкости. Картофель нарезать кубиками.\n" +
@@ -117,7 +131,8 @@ val sampleRecipeDetailsList = listOf(
                 "4. Зажарка: Добавить в суп обжаренные лук с морковью, посолить, поперчить. Бросить лавровый лист.\n" +
                 "\n" +
                 "5. Завершение: Варить еще 5–7 минут до готовности всех ингредиентов. Выключить огонь, добавить измельченный чеснок и свежую зелень. Дать настояться под крышкой 10 минут перед подачей.",
-    ),RecipeDetails(
+    ),
+    RecipeDetails(
         id = 3,
         title = "Курица в сливочном соусе на сковороде",
         category = "Горячее",
@@ -205,9 +220,9 @@ val sampleRecipeDetailsList = listOf(
                 "душистый перец (по вкусу)\n" +
                 "соль (по вкусу)",
         description = "1. Соус Бешамель: В сотейнике растопить сливочное масло, всыпать муку, быстро перемешать. Тонкой струйкой влить горячее молоко, постоянно мешая венчиком, чтобы не было комочков. Варить на медленном огне, помешивая, пока соус не загустеет (3–5 минут). Добавить соль и душистый перец.\n" +
-                        "2. Сборка: В форму для запекания выложить на дно немного соуса Бешамель. Сверху выложить листы лазаньи (сухие, если на пачке не указано иное). На листы — часть мясного соуса, затем немного Бешамеля. Повторить слои 3–4 раза (листы, мясо, бешамель). Верхний слой должен быть из листов, обильно смазанных Бешамелем.\n"+
-                        "3. Запекание: Посыпать верх тертым сыром. Накрыть форму фольгой и поставить в разогретую до 180°C духовку на 25 минут. Затем снять фольгу и запекать еще 10 минут до румяной корочки.\n"+
-                        "4. Подача: Достать лазанью из духовки, дать постоять 10–15 минут (чтобы лучше резалась и держала форму), затем нарезать на порции."
+                "2. Сборка: В форму для запекания выложить на дно немного соуса Бешамель. Сверху выложить листы лазаньи (сухие, если на пачке не указано иное). На листы — часть мясного соуса, затем немного Бешамеля. Повторить слои 3–4 раза (листы, мясо, бешамель). Верхний слой должен быть из листов, обильно смазанных Бешамелем.\n" +
+                "3. Запекание: Посыпать верх тертым сыром. Накрыть форму фольгой и поставить в разогретую до 180°C духовку на 25 минут. Затем снять фольгу и запекать еще 10 минут до румяной корочки.\n" +
+                "4. Подача: Достать лазанью из духовки, дать постоять 10–15 минут (чтобы лучше резалась и держала форму), затем нарезать на порции."
     ),
 )
 
@@ -217,7 +232,9 @@ fun getRecipeDetailsById(id: Int): RecipeDetails? {
 
 data class RecipeListUiState(
     val searchQuery: String = "",
-    val recipeList: List<Recipe> = sampleRecipeList
+    val recipeList: List<Recipe> = sampleRecipeList,
+    val currentFilter: RecipeFilter = RecipeFilter.ALL,
+    val recipeStatuses: Map<Int, RecipeStatus> = emptyMap()
 )
 
 class RecipeViewModel : ViewModel() {
@@ -227,7 +244,22 @@ class RecipeViewModel : ViewModel() {
     fun onSearchChange(newValue: String) {
         uiState = uiState.copy(
             searchQuery = newValue,
-            recipeList = filterRecipe(newValue)
+            recipeList = filterRecipes(newValue, uiState.currentFilter, uiState.recipeStatuses)
+        )
+    }
+
+    fun onFilterChange(newFilter: RecipeFilter) {
+        uiState = uiState.copy(
+            currentFilter = newFilter,
+            recipeList = filterRecipes(uiState.searchQuery, newFilter, uiState.recipeStatuses)
+        )
+    }
+
+    fun onStatusChange(id: Int, newStatus: RecipeStatus) {
+        val updatedStatuses = uiState.recipeStatuses + (id to newStatus)
+        uiState = uiState.copy(
+            recipeStatuses = updatedStatuses,
+            recipeList = filterRecipes(uiState.searchQuery, uiState.currentFilter, updatedStatuses)
         )
     }
 
@@ -235,11 +267,25 @@ class RecipeViewModel : ViewModel() {
         return sampleRecipeDetailsList.find { it.id == id }
     }
 
-    private fun filterRecipe(query: String): List<Recipe> {
-        if (query.isBlank()) return sampleRecipeList
+    private fun filterRecipes(
+        query: String,
+        filter: RecipeFilter,
+        statuses: Map<Int, RecipeStatus>
+    ): List<Recipe> {
+        val searched = if (query.isBlank()) {
+            sampleRecipeList
+        } else {
+            sampleRecipeList.filter { it.title.contains(query, ignoreCase = true) }
+        }
 
-        return sampleRecipeList.filter { recipe ->
-            recipe.title.contains( query, ignoreCase = true)
+        return searched.filter { recipe ->
+            val status = statuses[recipe.id] ?: RecipeStatus()
+            when (filter) {
+                RecipeFilter.ALL -> true
+                RecipeFilter.WANT_TO_COOK -> status.stage == RecipeStage.WANT_TO_COOK
+                RecipeFilter.COOKING -> status.stage == RecipeStage.COOKING
+                RecipeFilter.COOKED -> status.stage == RecipeStage.COOKED
+            }
         }
     }
 }
@@ -263,10 +309,15 @@ fun RecipeApp() {
         composable(RecipeRoutes.LIST_ROUTE) {
             RecipeListScreen(
                 recipeList = uiState.recipeList,
+                recipeStatuses = uiState.recipeStatuses,
+                currentFilter = uiState.currentFilter,
                 searchQuery = uiState.searchQuery,
                 onSearchQueryChange = recipeViewModel::onSearchChange,
-                onRecipeClick = { animeId ->
-                    navController.navigate(RecipeRoutes.details(animeId)) }
+                onFilterChange = recipeViewModel::onFilterChange,
+                onStatusChange = recipeViewModel::onStatusChange,
+                onRecipeClick = { recipeId ->
+                    navController.navigate(RecipeRoutes.details(recipeId))
+                }
             )
         }
 
@@ -275,7 +326,8 @@ fun RecipeApp() {
             arguments = listOf(
                 navArgument(
                     RecipeRoutes.RECIPE_ID_ARG
-                ) { type = NavType.IntType })
+                ) { type = NavType.IntType }
+            )
         ) { backStackEntry ->
             val recipeId = backStackEntry.arguments?.getInt(RecipeRoutes.RECIPE_ID_ARG)
             if (recipeId != null) {
@@ -292,9 +344,13 @@ fun RecipeApp() {
 @Composable
 fun RecipeListScreen(
     recipeList: List<Recipe>,
+    recipeStatuses: Map<Int, RecipeStatus>,
+    onStatusChange: (Int, RecipeStatus) -> Unit,
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,
     onRecipeClick: (Int) -> Unit,
+    currentFilter: RecipeFilter,
+    onFilterChange: (RecipeFilter) -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -316,20 +372,63 @@ fun RecipeListScreen(
                 value = searchQuery,
                 onValueChange = onSearchQueryChange,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("Search by title") },
+                label = { Text("Поиск по названию") },
                 singleLine = true,
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
+            ) {
+                FilterChip(
+                    onClick = { onFilterChange(RecipeFilter.ALL) },
+                    label = { Text("Все рецепты") },
+                    selected = currentFilter == RecipeFilter.ALL
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
+            ) {
+                FilterChip(
+                    onClick = { onFilterChange(RecipeFilter.WANT_TO_COOK) },
+                    label = { Text("Хочу сделать") },
+                    selected = currentFilter == RecipeFilter.WANT_TO_COOK
+                )
+                FilterChip(
+                    onClick = { onFilterChange(RecipeFilter.COOKING) },
+                    label = { Text("В процессе") },
+                    selected = currentFilter == RecipeFilter.COOKING
+                )
+                FilterChip(
+                    onClick = { onFilterChange(RecipeFilter.COOKED) },
+                    label = { Text("Приготовлено") },
+                    selected = currentFilter == RecipeFilter.COOKED
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             if (recipeList.isEmpty()) {
-                Text("No recipe found")
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("Рецепты не найдены")
+                }
             } else {
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(items = recipeList, key = { it.id }) { item ->
                         RecipeCard(
                             recipe = item,
-                            onClick = { onRecipeClick(item.id) }
+                            status = recipeStatuses[item.id] ?: RecipeStatus(),
+                            onClick = { onRecipeClick(item.id) },
+                            onStatusChange = { newStatus ->
+                                onStatusChange(item.id, newStatus)
+                            }
                         )
                     }
                 }
@@ -338,10 +437,27 @@ fun RecipeListScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun FilterChip(
+    onClick: () -> Unit,
+    label: @Composable () -> Unit,
+    selected: Boolean
+) {
+    androidx.compose.material3.FilterChip(
+        onClick = onClick,
+        label = label,
+        selected = selected,
+        modifier = Modifier.wrapContentSize()
+    )
+}
+
 @Composable
 fun RecipeCard(
     recipe: Recipe,
+    status: RecipeStatus,
     onClick: () -> Unit,
+    onStatusChange: (RecipeStatus) -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -349,23 +465,47 @@ fun RecipeCard(
             .clickable { onClick() },
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(18.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
+                .padding(18.dp)
         ) {
-            Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = recipe.title,
+                fontWeight = FontWeight.Bold,
+                fontSize = 19.sp
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text = "Сложность: ${recipe.difficulty}\n" +
+                        "Кол-во порций: ${recipe.portions}\n" +
+                        "Калорийность (100g): ${recipe.calories} ккал",
+                fontSize = 17.sp
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Button(
+                onClick = {
+                    val newStage = when (status.stage) {
+                        RecipeStage.NONE -> RecipeStage.WANT_TO_COOK
+                        RecipeStage.WANT_TO_COOK -> RecipeStage.COOKING
+                        RecipeStage.COOKING -> RecipeStage.COOKED
+                        RecipeStage.COOKED -> RecipeStage.NONE
+                    }
+                    onStatusChange(status.copy(stage = newStage))
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 Text(
-                    text = recipe.title,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 19.sp
-                )
-                Text(
-                    text = "Сложность: ${recipe.difficulty} \n" +
-                            "Кол-во порций: ${recipe.portions} \n" +
-                            "Калорийность (100g): ${recipe.calories} ккал",
-                    fontSize = 18.sp
+                    text = when (status.stage) {
+                        RecipeStage.NONE -> "Хочу сделать"
+                        RecipeStage.WANT_TO_COOK -> "В процессе"
+                        RecipeStage.COOKING -> "Приготовлено"
+                        RecipeStage.COOKED -> "Приготовлено (нажать для сброса)"
+                    }
                 )
             }
         }
@@ -379,7 +519,9 @@ fun RecipeDetailsScreen(recipeId: Int, onBackClick: () -> Unit) {
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Рецепт \"${details?.title ?: "Unknown"}\"") })
+            TopAppBar(
+                title = { Text(details?.title ?: "Рецепт") }
+            )
         }
     ) { innerPadding ->
         Column(
@@ -391,7 +533,7 @@ fun RecipeDetailsScreen(recipeId: Int, onBackClick: () -> Unit) {
             Button(
                 onClick = onBackClick
             ) {
-                Text("Back")
+                Text("Обратно к списку")
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -435,7 +577,9 @@ fun RecipeDetailsScreen(recipeId: Int, onBackClick: () -> Unit) {
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {
-    Surface(color = MaterialTheme.colorScheme.background) {
-        RecipeApp()
+    MaterialTheme {
+        Surface(color = MaterialTheme.colorScheme.background) {
+            RecipeApp()
+        }
     }
 }

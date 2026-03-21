@@ -503,6 +503,7 @@ fun RecipeCard(
     }
 }
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecipeDetailsScreen(

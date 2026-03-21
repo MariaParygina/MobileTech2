@@ -230,7 +230,9 @@ data class RecipeListUiState(
     val searchQuery: String = "",
     val recipeList: List<Recipe> = sampleRecipeList,
     val currentFilter: RecipeFilter = RecipeFilter.ALL,
-    val recipeStatuses: Map<Int, RecipeStatus> = emptyMap()
+    val recipeStatuses: Map<Int, RecipeStatus> = sampleRecipeList.associate {
+        it.id to RecipeStatus(stage = RecipeStage.WANT_TO_COOK)
+    }
 )
 
 class RecipeViewModel : ViewModel() {
@@ -274,7 +276,7 @@ class RecipeViewModel : ViewModel() {
             val status = statuses[recipe.id] ?: RecipeStatus()
             when (filter) {
                 RecipeFilter.ALL -> true
-                RecipeFilter.WANT_TO_COOK -> true
+                RecipeFilter.WANT_TO_COOK -> status.stage == RecipeStage.WANT_TO_COOK
                 RecipeFilter.COOKING -> status.stage == RecipeStage.COOKING
                 RecipeFilter.COOKED -> status.stage == RecipeStage.COOKED
             }
@@ -391,7 +393,7 @@ fun RecipeListScreen(
             ) {
                 FilterChip(
                     onClick = { onFilterChange(RecipeFilter.WANT_TO_COOK) },
-                    label = { Text("Хочу приготовить") },
+                    label = { Text("Хочу сделать") },
                     selected = currentFilter == RecipeFilter.WANT_TO_COOK
                 )
                 FilterChip(
@@ -471,18 +473,18 @@ fun RecipeCard(
             Button(
                 onClick = {
                     val newStage = when (status.stage) {
-                        RecipeStage.NONE -> RecipeStage.WANT_TO_COOK
                         RecipeStage.WANT_TO_COOK -> RecipeStage.COOKING
                         RecipeStage.COOKING -> RecipeStage.COOKED
-                        RecipeStage.COOKED -> RecipeStage.NONE
+                        RecipeStage.COOKED -> RecipeStage.WANT_TO_COOK
+                        else -> status.stage
                     }
                     onStatusChange(status.copy(stage = newStage))
                 },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = when ( status.stage ) {
+                    containerColor = when (status.stage) {
                         RecipeStage.NONE -> Color(0xFF8BC34A)
-                        RecipeStage.WANT_TO_COOK -> Color(0xFFFFEB3B)
+                        RecipeStage.WANT_TO_COOK -> Color(0xFFFFC107)
                         RecipeStage.COOKING -> Color(0xFFFF9800)
                         RecipeStage.COOKED -> Color(0xFFFF5722)
                     }

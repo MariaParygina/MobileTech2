@@ -226,10 +226,6 @@ val sampleRecipeDetailsList = listOf(
     ),
 )
 
-fun getRecipeDetailsById(id: Int): RecipeDetails? {
-    return sampleRecipeDetailsList.find { it.id == id }
-}
-
 data class RecipeListUiState(
     val searchQuery: String = "",
     val recipeList: List<Recipe> = sampleRecipeList,
@@ -263,10 +259,6 @@ class RecipeViewModel : ViewModel() {
         )
     }
 
-    fun getRecipeDetailsById(id: Int): RecipeDetails? {
-        return sampleRecipeDetailsList.find { it.id == id }
-    }
-
     private fun filterRecipes(
         query: String,
         filter: RecipeFilter,
@@ -282,7 +274,7 @@ class RecipeViewModel : ViewModel() {
             val status = statuses[recipe.id] ?: RecipeStatus()
             when (filter) {
                 RecipeFilter.ALL -> true
-                RecipeFilter.WANT_TO_COOK -> status.stage == RecipeStage.WANT_TO_COOK
+                RecipeFilter.WANT_TO_COOK -> true
                 RecipeFilter.COOKING -> status.stage == RecipeStage.COOKING
                 RecipeFilter.COOKED -> status.stage == RecipeStage.COOKED
             }
@@ -297,6 +289,10 @@ object RecipeRoutes {
 
     const val DETAILS_ROUTE_PATTERN = "$DETAILS_ROUTE/{$RECIPE_ID_ARG}"
     fun details(recipeId: Int): String = "$DETAILS_ROUTE/$recipeId"
+}
+
+fun getRecipeDetailsById(id: Int): RecipeDetails? {
+    return sampleRecipeDetailsList.find { it.id == id }
 }
 
 @Composable
@@ -395,7 +391,7 @@ fun RecipeListScreen(
             ) {
                 FilterChip(
                     onClick = { onFilterChange(RecipeFilter.WANT_TO_COOK) },
-                    label = { Text("Хочу сделать") },
+                    label = { Text("Хочу приготовить") },
                     selected = currentFilter == RecipeFilter.WANT_TO_COOK
                 )
                 FilterChip(
@@ -435,21 +431,6 @@ fun RecipeListScreen(
             }
         }
     }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun FilterChip(
-    onClick: () -> Unit,
-    label: @Composable () -> Unit,
-    selected: Boolean
-) {
-    androidx.compose.material3.FilterChip(
-        onClick = onClick,
-        label = label,
-        selected = selected,
-        modifier = Modifier.wrapContentSize()
-    )
 }
 
 @Composable
@@ -497,14 +478,22 @@ fun RecipeCard(
                     }
                     onStatusChange(status.copy(stage = newStage))
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = when ( status.stage ) {
+                        RecipeStage.NONE -> Color(0xFF8BC34A)
+                        RecipeStage.WANT_TO_COOK -> Color(0xFFFFEB3B)
+                        RecipeStage.COOKING -> Color(0xFFFF9800)
+                        RecipeStage.COOKED -> Color(0xFFFF5722)
+                    }
+                )
             ) {
                 Text(
                     text = when (status.stage) {
-                        RecipeStage.NONE -> "Хочу сделать"
-                        RecipeStage.WANT_TO_COOK -> "В процессе"
+                        RecipeStage.NONE -> "Хочу приготовить"
+                        RecipeStage.WANT_TO_COOK -> "Готовлю"
                         RecipeStage.COOKING -> "Приготовлено"
-                        RecipeStage.COOKED -> "Приготовлено (нажать для сброса)"
+                        RecipeStage.COOKED -> "Начать сначала"
                     }
                 )
             }
@@ -514,7 +503,9 @@ fun RecipeCard(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RecipeDetailsScreen(recipeId: Int, onBackClick: () -> Unit) {
+fun RecipeDetailsScreen(
+    recipeId: Int, onBackClick: () -> Unit
+) {
     val details = getRecipeDetailsById(recipeId)
 
     Scaffold(
@@ -524,52 +515,56 @@ fun RecipeDetailsScreen(recipeId: Int, onBackClick: () -> Unit) {
             )
         }
     ) { innerPadding ->
-        Column(
+        LazyColumn (
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp)
         ) {
-            Button(
-                onClick = onBackClick
-            ) {
-                Text("Обратно к списку")
+            item {
+                Button(
+                    onClick = onBackClick
+                ) {
+                    Text("Обратно к списку")
+                }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            item {
+                Spacer(modifier = Modifier.height(16.dp))
 
-            Text(
-                text = "Сложность: ${details?.difficulty} \n" +
-                        "Категория: ${details?.category} \n" +
-                        "Калорийность (100g): ${details?.calories} ккал \n" +
-                        "Кол-во порций: на ${details?.portions} человек \n" +
-                        "Время готовки: ${details?.time}",
-                fontSize = 18.sp
-            )
+                Text(
+                    text = "Сложность: ${details?.difficulty} \n" +
+                            "Категория: ${details?.category} \n" +
+                            "Калорийность (100g): ${details?.calories} ккал \n" +
+                            "Кол-во порций: на ${details?.portions} человек \n" +
+                            "Время готовки: ${details?.time}",
+                    fontSize = 18.sp
+                )
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-            Text(
-                text = "Ингредиенты:",
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
-            )
-            Text(
-                text = "${details?.ingredients}",
-                fontSize = 18.sp
-            )
+                Text(
+                    text = "Ингредиенты:",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                )
+                Text(
+                    text = "${details?.ingredients}",
+                    fontSize = 18.sp
+                )
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-            Text(
-                text = "Пошаговое описание:",
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
-            )
-            Text(
-                text = "${details?.description}",
-                fontSize = 18.sp
-            )
+                Text(
+                    text = "Пошаговое описание:",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                )
+                Text(
+                    text = "${details?.description}",
+                    fontSize = 18.sp
+                )
+            }
         }
     }
 }

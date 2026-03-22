@@ -231,7 +231,7 @@ data class RecipeListUiState(
     val recipeList: List<Recipe> = sampleRecipeList,
     val currentFilter: RecipeFilter = RecipeFilter.ALL,
     val recipeStatuses: Map<Int, RecipeStatus> = sampleRecipeList.associate {
-        it.id to RecipeStatus(stage = RecipeStage.WANT_TO_COOK)
+        it.id to RecipeStatus(stage = RecipeStage.NONE)
     }
 )
 
@@ -473,10 +473,10 @@ fun RecipeCard(
             Button(
                 onClick = {
                     val newStage = when (status.stage) {
+                        RecipeStage.NONE -> RecipeStage.WANT_TO_COOK
                         RecipeStage.WANT_TO_COOK -> RecipeStage.COOKING
                         RecipeStage.COOKING -> RecipeStage.COOKED
-                        RecipeStage.COOKED -> RecipeStage.WANT_TO_COOK
-                        else -> status.stage
+                        RecipeStage.COOKED -> RecipeStage.NONE
                     }
                     onStatusChange(status.copy(stage = newStage))
                 },
@@ -493,8 +493,8 @@ fun RecipeCard(
                 Text(
                     text = when (status.stage) {
                         RecipeStage.NONE -> "Хочу приготовить"
-                        RecipeStage.WANT_TO_COOK -> "Готовлю"
-                        RecipeStage.COOKING -> "Приготовлено"
+                        RecipeStage.WANT_TO_COOK -> "Начать готовить"
+                        RecipeStage.COOKING -> "Завершить готовку"
                         RecipeStage.COOKED -> "Начать сначала"
                     }
                 )
